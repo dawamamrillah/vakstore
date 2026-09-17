@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 450" width="500" height="450">
+  <defs>
+    <!-- Facet gradients matching deep olive #525A43 and shades -->
+    <linearGradient id="facetTopLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#414934" />
+      <stop offset="100%" stop-color="#343b29" />
+    </linearGradient>
+    <linearGradient id="facetTopRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a634a" />
+      <stop offset="100%" stop-color="#4d553e" />
+    </linearGradient>
+    <linearGradient id="facetBottomLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b422f" />
+      <stop offset="100%" stop-color="#2d3324" />
+    </linearGradient>
+    <linearGradient id="facetBottomRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#48503b" />
+      <stop offset="100%" stop-color="#3b422e" />
+    </linearGradient>
+  </defs>
+
+  <!-- Geometric Polygonal Monogram / Diamond Arrowhead -->
+  <g transform="translate(0, 10)">
+    <!-- Top Apex Left Facet -->
+    <polygon points="250,30 170,140 250,165" fill="url(#facetTopLeft)" />
+    
+    <!-- Top Apex Right Facet -->
+    <polygon points="250,30 330,140 250,165" fill="url(#facetTopRight)" />
+    
+    <!-- Central White Chevron / "V" Space (negative space) -->
+    <polygon points="250,165 210,195 250,225 290,195" fill="#E7DBCD" opacity="0.95" />
+    
+    <!-- Lower Diamond Left Facet -->
+    <polygon points="250,165 210,195 250,245 190,195" fill="url(#facetBottomLeft)" />
+    <polygon points="250,245 190,195 250,165" fill="#38402c" />
+
+    <!-- Lower Diamond Right Facet -->
+    <polygon points="250,165 290,195 250,245 310,195" fill="url(#facetBottomRight)" />
+    <polygon points="250,245 310,195 250,165" fill="#4d553e" />
+    
+    <!-- Crisp Geometric Overlap Polygons matching the exact shape in IMAGE_3 -->
+    <!-- Upper Diamond/Arrow -->
+    <polygon points="250,30 172,142 225,142 250,105 275,142 328,142" fill="#525A43" />
+    <polygon points="250,30 275,142 328,142" fill="#5E674E" />
+    <polygon points="250,30 172,142 225,142" fill="#434B36" />
+    
+    <!-- Inverted V / Chevron Gap -->
+    <polygon points="250,105 225,142 250,168 275,142" fill="#E7DBCD" />
+    
+    <!-- Lower Faceted Body (Forming the bottom of the gem / V shape) -->
+    <polygon points="250,168 200,142 190,205 250,245" fill="#3D4531" />
+    <polygon points="250,168 300,142 310,205 250,245" fill="#4A533B" />
+    <polygon points="250,168 250,245 200,142" fill="#333A29" />
+    <polygon points="250,168 250,245 300,142" fill="#555E45" />
+    
+    <!-- Inner faceted highlights -->
+    <polygon points="250,105 250,168 225,142" fill="#D8CABE" />
+    <polygon points="250,105 250,168 275,142" fill="#EFE5D9" />
+  </g>
+
+  <!-- Typography: VAKSTORE -->
+  <text x="250" y="340" 
+        font-family="'Plus Jakarta Sans', 'Inter', 'Montserrat', -apple-system, sans-serif" 
+        font-size="60" 
+        font-weight="900" 
+        letter-spacing="5" 
+        fill="#373E2C" 
+        text-anchor="middle">VAKSTORE</text>
+
+  <!-- Subtitle: SINCE 2026 -->
+  <text x="250" y="385" 
+        font-family="'Plus Jakarta Sans', 'Inter', 'Montserrat', -apple-system, sans-serif" 
+        font-size="22" 
+        font-weight="700" 
+        letter-spacing="14" 
+        fill="#525A43" 
+        text-anchor="middle">SINCE 2026</text>
+</svg>

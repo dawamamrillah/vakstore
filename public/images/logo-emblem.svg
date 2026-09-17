@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 280" width="350" height="280">
+  <defs>
+    <linearGradient id="facetTopLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#414934" />
+      <stop offset="100%" stop-color="#343b29" />
+    </linearGradient>
+    <linearGradient id="facetTopRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a634a" />
+      <stop offset="100%" stop-color="#4d553e" />
+    </linearGradient>
+    <linearGradient id="facetBottomLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b422f" />
+      <stop offset="100%" stop-color="#2d3324" />
+    </linearGradient>
+    <linearGradient id="facetBottomRight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#48503b" />
+      <stop offset="100%" stop-color="#3b422e" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(-75, 10)">
+    <!-- Upper Diamond/Arrow -->
+    <polygon points="250,30 172,142 225,142 250,105 275,142 328,142" fill="#525A43" />
+    <polygon points="250,30 275,142 328,142" fill="#5E674E" />
+    <polygon points="250,30 172,142 225,142" fill="#434B36" />
+    
+    <!-- Inverted V / Chevron Gap -->
+    <polygon points="250,105 225,142 250,168 275,142" fill="#E7DBCD" />
+    
+    <!-- Lower Faceted Body -->
+    <polygon points="250,168 200,142 190,205 250,245" fill="#3D4531" />
+    <polygon points="250,168 300,142 310,205 250,245" fill="#4A533B" />
+    <polygon points="250,168 250,245 200,142" fill="#333A29" />
+    <polygon points="250,168 250,245 300,142" fill="#555E45" />
+    
+    <!-- Inner faceted highlights -->
+    <polygon points="250,105 250,168 225,142" fill="#D8CABE" />
+    <polygon points="250,105 250,168 275,142" fill="#EFE5D9" />
+  </g>
+</svg>
