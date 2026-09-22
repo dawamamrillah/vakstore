@@ -22,16 +22,31 @@
 
     @php
         $isPureBill = in_array($service->slug, ['pdam-nusantara', 'telkom-indihome']);
-        $isPln = ($service->slug === 'pln');
+        $isPln = in_array($service->slug, ['pln', 'pln-pascabayar']);
+        $isPlnPostpaid = ($service->slug === 'pln-pascabayar');
         $isPulsa = ($service->slug === 'pulsa-all-operator');
 
         $defaultProduct = $service->products->first();
-        $plnPostpaidProduct = $isPln ? $service->products->firstWhere('sku', 'PLN-POSTPAID') : null;
-        $plnPrepaidProducts = $isPln ? $service->products->where('sub_category', 'Prabayar (Token)') : collect();
+        $plnPostpaidProduct = $isPlnPostpaid
+            ? $service->products->firstWhere('provider_sku', 'plnpas1')
+            : null;
+        $plnPrepaidProducts = ($service->slug === 'pln')
+            ? $service->products->where('sub_category', 'Prabayar (Token)')
+            : collect();
 
-        // Mapped PPOB Service Options from database
+        // Mapped PPOB Service Options from ALL active products.
+        // Each option belongs to its own Product (e.g. PDAM Sumenep -> pd32 -> Product 356).
         $mainBillProduct = $isPureBill ? $service->products->first() : null;
-        $serviceOptions = $mainBillProduct ? $mainBillProduct->serviceOptions()->where('status', 'active')->orderBy('name')->get() : collect();
+        $productsById = $service->products->keyBy('id');
+
+        $serviceOptions = $isPureBill
+            ? $service->products
+                ->flatMap(fn ($product) => $product->serviceOptions)
+                ->filter(fn ($opt) => $opt->status === 'active')
+                ->sortBy('name')
+                ->values()
+            : collect();
+
         $groupedOptions = $serviceOptions->groupBy(fn($opt) => $opt->region_name ?: 'Nasional');
     @endphp
 
@@ -263,11 +278,11 @@
                                                             <div 
                                                                 class="biller-option-item px-3 py-2 rounded-xl text-xs font-semibold text-[#1F2419] hover:bg-[#525A43] hover:text-white cursor-pointer transition-colors flex items-center justify-between group/item"
                                                                 data-id="{{ $opt->id }}"
-                                                                data-product-id="{{ $mainBillProduct->id ?? '' }}"
+                                                                data-product-id="{{ $opt->product_id }}"
                                                                 data-name="{{ $opt->name }}"
-                                                                data-admin="{{ $mainBillProduct->selling_price ?? 2500 }}"
+                                                                data-admin="{{ $productsById->get($opt->product_id)?->selling_price ?? 2500 }}"
                                                                 data-sku="{{ $opt->buyer_sku_code }}"
-                                                                onclick="selectCustomBillerOption({{ $opt->id }}, {{ $mainBillProduct->id ?? 'null' }}, '{{ addslashes($opt->name) }}', {{ $mainBillProduct->selling_price ?? 2500 }}, '{{ $opt->buyer_sku_code }}', event)"
+                                                                onclick="selectCustomBillerOption({{ $opt->id }}, {{ $opt->product_id }}, '{{ addslashes($opt->name) }}', {{ $productsById->get($opt->product_id)?->selling_price ?? 2500 }}, '{{ $opt->buyer_sku_code }}', event)"
                                                             >
                                                                 <span class="truncate pr-2">{{ $opt->name }}</span>
                                                                 <span class="material-symbols-outlined text-sm opacity-0 group-hover/item:opacity-100 transition-opacity">check</span>
@@ -311,7 +326,7 @@
                                         @foreach($groupedOptions as $regionName => $options)
                                             <optgroup label="📍 {{ $regionName }}" class="biller-group">
                                                 @foreach($options as $opt)
-                                                    <option value="{{ $opt->id }}" data-product-id="{{ $mainBillProduct->id ?? '' }}" data-sku="{{ $opt->buyer_sku_code }}" data-name="{{ $opt->name }}" data-admin="{{ $mainBillProduct->selling_price ?? 2500 }}" class="biller-option">
+                                                    <option value="{{ $opt->id }}" data-product-id="{{ $opt->product_id }}" data-sku="{{ $opt->buyer_sku_code }}" data-name="{{ $opt->name }}" data-admin="{{ $productsById->get($opt->product_id)?->selling_price ?? 2500 }}" class="biller-option">
                                                         {{ $opt->name }}
                                                     </option>
                                                 @endforeach
@@ -860,7 +875,7 @@
 
 @push('scripts')
 <script>
-    let isBillMode = {{ $isPureBill ? 'true' : 'false' }};
+    let isBillMode = {{ ($isPureBill || $isPlnPostpaid) ? 'true' : 'false' }};
     let currentBillAmount = 0;
     let currentPrice = 0;
     let currentFee = 0;

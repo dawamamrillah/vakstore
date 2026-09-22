@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\Product;
 use App\Services\Provider\GameTopupService;
 use App\Services\Transaction\TransactionService;
 use App\Services\Voucher\VoucherService;
@@ -82,6 +83,15 @@ class TopUpController extends Controller
         ]);
 
         try {
+            $product = Product::with(['game.category'])
+                ->where('id', $request->product_id)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $product || $product->game?->category?->type !== 'game') {
+                throw new Exception('Produk tidak valid untuk layanan top-up game.');
+            }
+
             $user = auth()->user();
             $transaction = $this->transactionService->createOrder($request->all(), $user);
 

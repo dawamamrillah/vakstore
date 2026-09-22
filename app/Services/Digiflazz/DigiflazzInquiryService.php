@@ -64,7 +64,7 @@ class DigiflazzInquiryService
                     'ref_id' => $reference,
                     'customer_no' => $customerNo,
                     'target' => $customerNo,
-                    'target_secondary' => $buyerSkuCode,
+                    'target_secondary' => null,
                     'customer_name' => $customerName,
                     'nickname' => $customerName,
                     'bill_amount' => $billAmount,
