@@ -4,6 +4,7 @@ namespace App\Services\Digiflazz;
 
 use App\Models\DigiflazzTransaction;
 use App\Models\Transaction;
+use App\Support\ErrorSanitizer;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -39,7 +40,7 @@ class DigiflazzTransactionService
         );
 
         if (! $this->client->isConfigured()) {
-            $msg = 'Digiflazz credentials are not configured.';
+            $msg = 'Kredensial provider gateway belum dikonfigurasi.';
             $dfTrx->update([
                 'supplier_status' => 'Gagal',
                 'rc' => '99',
@@ -82,7 +83,7 @@ class DigiflazzTransactionService
             $supplierStatus = $data['status'] ?? ($apiResult['success'] ? 'Sukses' : 'Gagal');
             $rc = (string) ($data['rc'] ?? ($apiResult['success'] ? '00' : '99'));
             $sn = $data['sn'] ?? null;
-            $message = $data['message'] ?? ($apiResult['message'] ?? 'Transaksi diproses.');
+            $message = ErrorSanitizer::sanitize($data['message'] ?? ($apiResult['message'] ?? 'Transaksi diproses.'));
 
             // Update supplier audit log
             $dfTrx->update([
@@ -160,7 +161,8 @@ class DigiflazzTransactionService
                 'data' => $data,
             ];
         } catch (Exception $e) {
-            Log::error('Prepaid Digiflazz transaction exception: '.$e->getMessage(), [
+            $cleanErr = ErrorSanitizer::sanitize($e->getMessage());
+            Log::error('Provider transaction exception: '.$cleanErr, [
                 'invoice' => $transaction->invoice_number,
                 'sku' => $buyerSkuCode,
             ]);
@@ -181,7 +183,7 @@ class DigiflazzTransactionService
                 ];
             }
 
-            $errorMsg = 'Error communicating with provider: '.$e->getMessage();
+            $errorMsg = 'Gagal menghubungi server provider: '.$cleanErr;
             $dfTrx->update([
                 'supplier_status' => 'Gagal',
                 'rc' => '99',

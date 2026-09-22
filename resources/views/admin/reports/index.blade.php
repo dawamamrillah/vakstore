@@ -30,7 +30,7 @@
             <h3 class="text-2xl font-extrabold text-[#1A2016] mt-1">Rp {{ number_format($overallRevenue, 0, ',', '.') }}</h3>
         </div>
         <div class="bg-[#FFFFFF] border border-[#DCD1C2] rounded-2xl p-5 shadow-xs">
-            <span class="text-[10px] text-[#5C6454] uppercase font-bold">Total Modal Digiflazz</span>
+            <span class="text-[10px] text-[#5C6454] uppercase font-bold">Total Harga Modal</span>
             <h3 class="text-2xl font-extrabold text-[#5C6454] mt-1">Rp {{ number_format($overallCost, 0, ',', '.') }}</h3>
         </div>
         <div class="bg-[#FFFFFF] border border-emerald-300 rounded-2xl p-5 shadow-xs bg-emerald-50/40">
@@ -41,7 +41,7 @@
 
     <!-- Product Breakdown Table -->
     <div class="bg-[#FFFFFF] border border-[#DCD1C2] rounded-3xl p-6 lg:p-8 shadow-sm">
-        <h3 class="text-base font-extrabold text-[#1A2016] mb-4">Rincian Profitabilitas Berdasarkan Produk Digiflazz</h3>
+        <h3 class="text-base font-extrabold text-[#1A2016] mb-4">Rincian Profitabilitas Berdasarkan Produk</h3>
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
                 <thead>
@@ -50,7 +50,7 @@
                         <th class="pb-3">Kategori / Game</th>
                         <th class="pb-3 text-center">Volume Order</th>
                         <th class="pb-3 text-right">Omzet Bruto</th>
-                        <th class="pb-3 text-right">Modal Digiflazz</th>
+                        <th class="pb-3 text-right">Harga Modal</th>
                         <th class="pb-3 text-right">Total Diskon</th>
                         <th class="pb-3 text-right">Laba Bersih (Net Profit)</th>
                     </tr>

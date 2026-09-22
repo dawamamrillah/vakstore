@@ -57,7 +57,7 @@
                 <span class="text-[10px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full border border-amber-300">ADMIN ONLY</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1F2419] tracking-tight">Portal Akses Administrator</h1>
-            <p class="text-xs text-[#596152] mt-1 max-w-xs">Masuk untuk mengelola produk, transaksi, margin laba, dan telemetri Digiflazz.</p>
+            <p class="text-xs text-[#596152] mt-1 max-w-xs">Masuk untuk mengelola produk, transaksi, margin laba, dan telemetri sistem.</p>
         </div>
 
         <!-- Main Login Card -->

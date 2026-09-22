@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Game;
 use App\Models\Product;
+use App\Models\ProductSyncChange;
 use App\Models\Provider;
 use App\Services\Audit\AuditService;
 use App\Services\Provider\DigiflazzSyncService;
+use App\Support\ErrorSanitizer;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -83,6 +85,28 @@ class ProductController extends Controller
         $tabAvgProfit = (clone $query)->where('status', 'active')->avg('profit') ?? 0;
         $lastSyncedAt = Product::whereNotNull('last_synced_at')->max('last_synced_at');
 
+        // Unreviewed sync changes for active tab
+        $changesQuery = ProductSyncChange::with(['product', 'game', 'category'])->unreviewed();
+        if ($activeTab === 'ppob') {
+            if ($ppobCategory) {
+                $changesQuery->where('category_id', $ppobCategory->id);
+            }
+        } elseif ($activeTab === 'all') {
+            // all
+        } elseif ($activeGame) {
+            $changesQuery->where('game_id', $activeGame->id);
+        }
+        $unreviewedChanges = $changesQuery->latest()->get();
+
+        // Counters per game and total
+        $unreviewedCountsByGame = ProductSyncChange::unreviewed()
+            ->whereNotNull('game_id')
+            ->selectRaw('game_id, count(*) as total')
+            ->groupBy('game_id')
+            ->pluck('total', 'game_id')
+            ->toArray();
+        $totalUnreviewedCount = ProductSyncChange::unreviewed()->count();
+
         return view('admin.products.index', compact(
             'products',
             'games',
@@ -94,12 +118,15 @@ class ProductController extends Controller
             'tabTotalItems',
             'tabActiveItems',
             'tabAvgProfit',
-            'lastSyncedAt'
+            'lastSyncedAt',
+            'unreviewedChanges',
+            'unreviewedCountsByGame',
+            'totalUnreviewedCount'
         ));
     }
 
     /**
-     * Trigger Real-Time Sync from Digiflazz
+     * Trigger Real-Time Sync from Provider
      */
     public function syncDigiflazz(DigiflazzSyncService $syncService)
     {
@@ -108,8 +135,71 @@ class ProductController extends Controller
 
             return back()->with('success', $result['message']);
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal menyinkronkan data dari Digiflazz: '.$e->getMessage());
+            $cleanError = ErrorSanitizer::sanitize($e->getMessage());
+
+            return back()->with('error', 'Gagal menyinkronkan data provider: '.$cleanError);
         }
+    }
+
+    /**
+     * Review a single sync change and optionally adjust selling price
+     */
+    public function reviewChange(Request $request, $id)
+    {
+        $change = ProductSyncChange::with('product')->findOrFail($id);
+
+        if ($request->filled('selling_price') && $change->product) {
+            $newSell = (float) $request->selling_price;
+            $cost = (float) $change->product->cost_price;
+            $change->product->update([
+                'selling_price' => $newSell,
+                'profit' => $newSell - $cost,
+            ]);
+        }
+
+        $change->update([
+            'is_reviewed' => true,
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', 'Perubahan produk berhasil ditinjau dan harga telah diperbarui!');
+    }
+
+    /**
+     * Mark all unreviewed changes in current category/game as reviewed
+     */
+    public function markAllReviewed(Request $request)
+    {
+        $gameId = $request->get('game_id');
+        $categoryId = $request->get('category_id');
+        $tab = $request->get('tab');
+
+        $query = ProductSyncChange::unreviewed();
+        if ($gameId) {
+            $query->where('game_id', $gameId);
+        } elseif ($categoryId) {
+            $query->where('category_id', $categoryId);
+        } elseif ($tab && $tab !== 'all') {
+            if ($tab === 'ppob') {
+                $cat = Category::where('type', 'ppob')->first();
+                if ($cat) {
+                    $query->where('category_id', $cat->id);
+                }
+            } else {
+                $game = Game::where('slug', $tab)->first();
+                if ($game) {
+                    $query->where('game_id', $game->id);
+                }
+            }
+        }
+
+        $count = $query->count();
+        $query->update([
+            'is_reviewed' => true,
+            'reviewed_at' => now(),
+        ]);
+
+        return back()->with('success', "Berhasil menandai {$count} perubahan produk sebagai selesai ditinjau.");
     }
 
     /**

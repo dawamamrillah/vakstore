@@ -5,6 +5,7 @@ namespace App\Services\Provider;
 use App\Models\Category;
 use App\Models\Game;
 use App\Models\Product;
+use App\Models\ProductSyncChange;
 use App\Models\Provider;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -22,7 +23,7 @@ class DigiflazzSyncService
         $apiKey = config('digiflazz.development_key') ?: config('digiflazz.production_key');
 
         if (! $username || ! $apiKey) {
-            throw new Exception('Kredensial Digiflazz belum dikonfigurasi di file .env.');
+            throw new Exception('Kredensial provider belum dikonfigurasi di file .env.');
         }
 
         $sign = md5($username.$apiKey.'pricelist');
@@ -52,7 +53,7 @@ class DigiflazzSyncService
                     return [
                         'source' => 'live_api',
                         'data' => $data,
-                        'message' => 'Berhasil mengambil '.count($data).' produk prabayar dari API Digiflazz.',
+                        'message' => 'Berhasil mengambil '.count($data).' produk prabayar dari API provider.',
                     ];
                 }
 
@@ -63,7 +64,7 @@ class DigiflazzSyncService
                             return [
                                 'source' => 'cached_snapshot',
                                 'data' => $cachedData,
-                                'message' => 'Digiflazz cooldown aktif. Menggunakan snapshot katalog prabayar ('.count($cachedData).' produk).',
+                                'message' => 'Provider cooldown aktif. Menggunakan snapshot katalog prabayar ('.count($cachedData).' produk).',
                             ];
                         }
                     }
@@ -102,7 +103,7 @@ class DigiflazzSyncService
         $apiKey = config('digiflazz.development_key') ?: config('digiflazz.production_key');
 
         if (! $username || ! $apiKey) {
-            throw new Exception('Kredensial Digiflazz belum dikonfigurasi di file .env.');
+            throw new Exception('Kredensial provider belum dikonfigurasi di file .env.');
         }
 
         $sign = md5($username.$apiKey.'pricelist');
@@ -132,12 +133,12 @@ class DigiflazzSyncService
                     return [
                         'source' => 'live_api',
                         'data' => $data,
-                        'message' => 'Berhasil mengambil '.count($data).' produk pascabayar dari API Digiflazz.',
+                        'message' => 'Berhasil mengambil '.count($data).' produk pascabayar dari API provider.',
                     ];
                 }
             }
         } catch (Exception $e) {
-            Log::warning('Digiflazz pasca API call failed: '.$e->getMessage());
+            Log::warning('Provider pasca API call failed: '.$e->getMessage());
         }
 
         if (file_exists($cacheFile)) {
@@ -179,11 +180,11 @@ class DigiflazzSyncService
         $prepaidItems = $prepaidRes['data'] ?? [];
         $pascaItems = $pascaRes['data'] ?? [];
 
-        // 1. Ensure Digiflazz Provider exists
+        // 1. Ensure Provider exists
         $provider = Provider::firstOrCreate(
             ['code' => 'digiflazz'],
             [
-                'name' => 'Digiflazz Prepaid Gateway',
+                'name' => 'Provider Gateway (Utama)',
                 'base_url' => config('digiflazz.base_url'),
                 'api_key' => config('digiflazz.development_key'),
                 'api_secret' => config('digiflazz.production_key'),
@@ -589,11 +590,35 @@ class DigiflazzSyncService
             $normalizedSku = strtolower($dfSku);
 
             if ($product) {
+                $oldCost = (float) $product->cost_price;
+                $oldSell = (float) $product->selling_price;
+                $oldStatus = $product->status;
+                $newStatus = $dfStatus ? 'active' : 'inactive';
+
                 $sellingPrice = $product->selling_price;
                 if ($sellingPrice <= $dfPrice) {
                     $sellingPrice = $calculatedSellPrice;
                 }
                 $profit = $sellingPrice - $dfPrice;
+
+                $costDiffers = abs($oldCost - $dfPrice) >= 0.01;
+                $statusDiffers = $oldStatus !== $newStatus;
+
+                if ($costDiffers || $statusDiffers) {
+                    ProductSyncChange::create([
+                        'product_id' => $product->id,
+                        'game_id' => $game->id,
+                        'category_id' => $game->category_id,
+                        'change_type' => $costDiffers ? 'price_changed' : 'status_changed',
+                        'old_cost_price' => $oldCost,
+                        'new_cost_price' => $dfPrice,
+                        'old_selling_price' => $oldSell,
+                        'new_selling_price' => $sellingPrice,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'is_reviewed' => false,
+                    ]);
+                }
 
                 $product->update([
                     'category_id' => $game->category_id,
@@ -610,7 +635,7 @@ class DigiflazzSyncService
                     'sub_category' => $subCategory,
                     'badge' => $this->determineBadge($dfName),
                     'sort_order' => $this->determineSortOrder($dfName, $dfPrice),
-                    'status' => $dfStatus ? 'active' : 'inactive',
+                    'status' => $newStatus,
                     'last_synced_at' => now(),
                 ]);
 
@@ -618,7 +643,7 @@ class DigiflazzSyncService
             } else {
                 $profit = $calculatedSellPrice - $dfPrice;
 
-                Product::create([
+                $newProduct = Product::create([
                     'category_id' => $game->category_id,
                     'game_id' => $game->id,
                     'provider_id' => $provider->id,
@@ -637,6 +662,20 @@ class DigiflazzSyncService
                     'sort_order' => $this->determineSortOrder($dfName, $dfPrice),
                     'status' => $dfStatus ? 'active' : 'inactive',
                     'last_synced_at' => now(),
+                ]);
+
+                ProductSyncChange::create([
+                    'product_id' => $newProduct->id,
+                    'game_id' => $game->id,
+                    'category_id' => $game->category_id,
+                    'change_type' => 'new_product',
+                    'old_cost_price' => null,
+                    'new_cost_price' => $dfPrice,
+                    'old_selling_price' => null,
+                    'new_selling_price' => $calculatedSellPrice,
+                    'old_status' => null,
+                    'new_status' => $dfStatus ? 'active' : 'inactive',
+                    'is_reviewed' => false,
                 ]);
 
                 $createdCount++;
@@ -661,7 +700,7 @@ class DigiflazzSyncService
             $subCategory = $this->determinePascaSubcategory($dfBrand, $dfName);
             $internalSku = 'DF-PASCA-'.strtoupper(Str::slug($dfSku, ''));
 
-            // For pascabayar, cost_price = admin fee Digiflazz, selling_price = admin fee + Rp 500 margin
+            // For pascabayar, cost_price = admin fee, selling_price = admin fee + Rp 500 margin
             $costPrice = $dfAdmin > 0 ? $dfAdmin : 2500;
             $sellingPrice = $costPrice + 500;
             $profit = $sellingPrice - $costPrice;
@@ -671,6 +710,30 @@ class DigiflazzSyncService
                 ->first();
 
             if ($product) {
+                $oldCost = (float) $product->cost_price;
+                $oldSell = (float) $product->selling_price;
+                $oldStatus = $product->status;
+                $newStatus = $dfStatus ? 'active' : 'inactive';
+
+                $costDiffers = abs($oldCost - $costPrice) >= 0.01;
+                $statusDiffers = $oldStatus !== $newStatus;
+
+                if ($costDiffers || $statusDiffers) {
+                    ProductSyncChange::create([
+                        'product_id' => $product->id,
+                        'game_id' => $game->id,
+                        'category_id' => $catPasca->id,
+                        'change_type' => $costDiffers ? 'price_changed' : 'status_changed',
+                        'old_cost_price' => $oldCost,
+                        'new_cost_price' => $costPrice,
+                        'old_selling_price' => $oldSell,
+                        'new_selling_price' => $sellingPrice,
+                        'old_status' => $oldStatus,
+                        'new_status' => $newStatus,
+                        'is_reviewed' => false,
+                    ]);
+                }
+
                 $product->update([
                     'category_id' => $catPasca->id,
                     'game_id' => $game->id,
@@ -685,13 +748,13 @@ class DigiflazzSyncService
                     'sub_category' => $subCategory,
                     'badge' => 'TAGIHAN BULANAN',
                     'sort_order' => $this->determinePascaSortOrder($dfName),
-                    'status' => $dfStatus ? 'active' : 'inactive',
+                    'status' => $newStatus,
                     'last_synced_at' => now(),
                 ]);
 
                 $updatedCount++;
             } else {
-                Product::create([
+                $newProduct = Product::create([
                     'category_id' => $catPasca->id,
                     'game_id' => $game->id,
                     'provider_id' => $provider->id,
@@ -711,11 +774,25 @@ class DigiflazzSyncService
                     'last_synced_at' => now(),
                 ]);
 
+                ProductSyncChange::create([
+                    'product_id' => $newProduct->id,
+                    'game_id' => $game->id,
+                    'category_id' => $catPasca->id,
+                    'change_type' => 'new_product',
+                    'old_cost_price' => null,
+                    'new_cost_price' => $costPrice,
+                    'old_selling_price' => null,
+                    'new_selling_price' => $sellingPrice,
+                    'old_status' => null,
+                    'new_status' => $dfStatus ? 'active' : 'inactive',
+                    'is_reviewed' => false,
+                ]);
+
                 $createdCount++;
             }
         }
 
-        // Deactivate games and legacy products not in Digiflazz
+        // Deactivate games and legacy products not in provider
         $activeGameIds = array_map(fn ($g) => $g->id, $gamesMap);
         Game::whereNotIn('id', $activeGameIds)->update(['status' => 'inactive']);
         Product::where('provider_id', '!=', $provider->id)->update(['status' => 'inactive']);
@@ -747,7 +824,7 @@ class DigiflazzSyncService
             'created' => $createdCount,
             'updated' => $updatedCount,
             'brands' => $syncedBrands,
-            'message' => "Sinkronisasi Digiflazz berhasil! ({$createdCount} produk baru dibuat, {$updatedCount} harga modal produk diperbarui realtime). Total: {$totalAll} produk Digiflazz (321 Prabayar + 60 Pascabayar).",
+            'message' => "Sinkronisasi data produk provider berhasil! ({$createdCount} produk baru ditambahkan, {$updatedCount} harga modal diperbarui realtime). Total: {$totalAll} produk aktif.",
         ];
     }
 

@@ -4,6 +4,7 @@ namespace App\Services\Digiflazz;
 
 use App\Models\DigiflazzTransaction;
 use App\Models\Transaction;
+use App\Support\ErrorSanitizer;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -26,7 +27,7 @@ class DigiflazzInquiryService
         if (empty($buyerSkuCode)) {
             return [
                 'status' => 'error',
-                'message' => 'Kode SKU Digiflazz tidak valid atau belum ditentukan.',
+                'message' => 'Kode SKU provider tidak valid atau belum ditentukan.',
             ];
         }
 
@@ -42,7 +43,7 @@ class DigiflazzInquiryService
         if (! $this->client->isConfigured()) {
             return [
                 'status' => 'error',
-                'message' => 'Layanan gateway Digiflazz belum dikonfigurasi di file .env.',
+                'message' => 'Layanan provider gateway sedang dalam pemeliharaan sistem.',
             ];
         }
 
@@ -75,9 +76,9 @@ class DigiflazzInquiryService
                 ];
             }
 
-            // Transparent provider error reporting - never disguise failure with dummy or fallback data
-            $errorMessage = $data['message'] ?? ($result['message'] ?? 'Tagihan tidak ditemukan atau ID pelanggan salah.');
-            Log::warning("Digiflazz postpaid inquiry error (RC: {$rc}): {$errorMessage}", [
+            // Transparent provider error reporting - sanitized and clean
+            $errorMessage = ErrorSanitizer::sanitize($data['message'] ?? ($result['message'] ?? 'Tagihan tidak ditemukan atau ID pelanggan salah.'));
+            Log::warning("Provider postpaid inquiry error (RC: {$rc}): {$errorMessage}", [
                 'sku' => $buyerSkuCode,
                 'customer_no' => $customerNo,
                 'ref_id' => $reference,
@@ -93,7 +94,8 @@ class DigiflazzInquiryService
                 'raw_data' => $data,
             ];
         } catch (Exception $e) {
-            Log::error('Digiflazz postpaid inquiry exception: '.$e->getMessage(), [
+            $cleanErr = ErrorSanitizer::sanitize($e->getMessage());
+            Log::error('Provider postpaid inquiry exception: '.$cleanErr, [
                 'sku' => $buyerSkuCode,
                 'customer_no' => $customerNo,
                 'ref_id' => $reference,
@@ -103,7 +105,7 @@ class DigiflazzInquiryService
                 'status' => 'error',
                 'ref_id' => $reference,
                 'customer_no' => $customerNo,
-                'message' => 'Gagal terhubung ke provider tagihan: '.$e->getMessage(),
+                'message' => 'Gagal terhubung ke provider tagihan: '.$cleanErr,
             ];
         }
     }
@@ -134,7 +136,7 @@ class DigiflazzInquiryService
         );
 
         if (! $this->client->isConfigured()) {
-            $message = 'Digiflazz provider gateway is not configured.';
+            $message = 'Layanan provider gateway sedang dalam pemeliharaan sistem.';
             $transaction->update([
                 'transaction_status' => 'failed',
                 'failure_reason' => $message,

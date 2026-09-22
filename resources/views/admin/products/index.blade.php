@@ -10,9 +10,9 @@
                 <span class="w-2.5 h-2.5 rounded-full bg-[#525A43] animate-pulse"></span>
                 <span class="text-xs font-bold uppercase tracking-widest text-[#5C6454]">Katalog &amp; Manajemen Laba Real-Time</span>
             </div>
-            <h1 class="text-2xl lg:text-3xl font-extrabold text-[#1A2016] tracking-tight mt-0.5">Katalog Produk &amp; Harga Modal Digiflazz</h1>
+            <h1 class="text-2xl lg:text-3xl font-extrabold text-[#1A2016] tracking-tight mt-0.5">Katalog Produk &amp; Manajemen Laba</h1>
             <p class="text-xs text-[#5C6454] mt-1">
-                Kolom harga modal terisi otomatis secara real-time dari Digiflazz. Kelola harga jual dan pantau margin laba bersih per kategori secara instan.
+                Kolom harga modal terisi otomatis secara real-time dari provider. Kelola harga jual dan pantau margin laba bersih per kategori secara instan.
             </p>
         </div>
 
@@ -30,16 +30,16 @@
                 <span class="material-symbols-outlined absolute left-2.5 top-2.5 text-[#878c7f] text-base">search</span>
             </form>
 
-            <!-- Real-Time Digiflazz Sync Button -->
+            <!-- Real-Time Provider Sync Button -->
             <form action="{{ route('admin.products.sync-digiflazz') }}" method="POST" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').innerText='Sinkronisasi...';">
                 @csrf
                 <button 
                     type="submit" 
                     class="h-10 px-4 bg-[#1F2419] hover:bg-[#3B432D] text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer border border-[#525A43]"
-                    title="Tarik & Update Harga Modal Real-Time dari Digiflazz"
+                    title="Tarik &amp; Update Harga Modal Real-Time dari Provider"
                 >
                     <span class="material-symbols-outlined text-base text-emerald-400">sync</span>
-                    <span>Tarik Data Digiflazz (Real-Time)</span>
+                    <span>Tarik Data Provider (Real-Time)</span>
                 </button>
             </form>
 
@@ -105,13 +105,21 @@
                 <span class="text-[10px] uppercase font-bold text-[#5C6454] tracking-wider px-2">Games:</span>
                 
                 @foreach($games->where('category.type', 'game') as $g)
-                    @php $iconData = $getGameIcon($g->slug); @endphp
+                    @php 
+                        $iconData = $getGameIcon($g->slug); 
+                        $cnt = $unreviewedCountsByGame[$g->id] ?? 0;
+                    @endphp
                     <a 
                         href="{{ route('admin.products', ['tab' => $g->slug]) }}" 
                         class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all {{ $activeTab === $g->slug ? 'bg-[#525A43] text-white shadow-xs' : 'bg-[#F6F0E8] text-[#1A2016] hover:bg-[#EAE1D4]' }}"
                     >
                         <span class="material-symbols-outlined text-sm {{ $activeTab === $g->slug ? 'text-white' : $iconData['color'] }}">{{ $iconData['icon'] }}</span>
                         <span>{{ $g->name }}</span>
+                        @if($cnt > 0)
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black {{ $activeTab === $g->slug ? 'bg-amber-400 text-amber-950' : 'bg-rose-500 text-white' }} shadow-xs animate-pulse">
+                                {{ $cnt }}
+                            </span>
+                        @endif
                     </a>
                 @endforeach
             </div>
@@ -120,13 +128,21 @@
                 <span class="text-[10px] uppercase font-bold text-[#5C6454] tracking-wider px-2">Pulsa &amp; Operator:</span>
 
                 @foreach($games->where('category.slug', 'pulsa-all-operator') as $p)
-                    @php $iconData = $getGameIcon($p->slug); @endphp
+                    @php 
+                        $iconData = $getGameIcon($p->slug); 
+                        $cnt = $unreviewedCountsByGame[$p->id] ?? 0;
+                    @endphp
                     <a 
                         href="{{ route('admin.products', ['tab' => $p->slug]) }}" 
                         class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all {{ $activeTab === $p->slug ? 'bg-[#525A43] text-white shadow-xs' : 'bg-[#F6F0E8] text-[#1A2016] hover:bg-[#EAE1D4]' }}"
                     >
                         <span class="material-symbols-outlined text-sm {{ $activeTab === $p->slug ? 'text-white' : $iconData['color'] }}">{{ $iconData['icon'] }}</span>
                         <span>{{ $p->name }}</span>
+                        @if($cnt > 0)
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black {{ $activeTab === $p->slug ? 'bg-amber-400 text-amber-950' : 'bg-rose-500 text-white' }} shadow-xs animate-pulse">
+                                {{ $cnt }}
+                            </span>
+                        @endif
                     </a>
                 @endforeach
             </div>
@@ -135,13 +151,21 @@
                 <span class="text-[10px] uppercase font-bold text-[#5C6454] tracking-wider px-2">Listrik PLN:</span>
 
                 @foreach($games->where('category.slug', 'pln') as $l)
-                    @php $iconData = $getGameIcon($l->slug); @endphp
+                    @php 
+                        $iconData = $getGameIcon($l->slug); 
+                        $cnt = $unreviewedCountsByGame[$l->id] ?? 0;
+                    @endphp
                     <a 
                         href="{{ route('admin.products', ['tab' => $l->slug]) }}" 
                         class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all {{ $activeTab === $l->slug ? 'bg-[#525A43] text-white shadow-xs' : 'bg-[#F6F0E8] text-[#1A2016] hover:bg-[#EAE1D4]' }}"
                     >
                         <span class="material-symbols-outlined text-sm {{ $activeTab === $l->slug ? 'text-white' : $iconData['color'] }}">{{ $iconData['icon'] }}</span>
                         <span>{{ $l->name }}</span>
+                        @if($cnt > 0)
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black {{ $activeTab === $l->slug ? 'bg-amber-400 text-amber-950' : 'bg-rose-500 text-white' }} shadow-xs animate-pulse">
+                                {{ $cnt }}
+                            </span>
+                        @endif
                     </a>
                 @endforeach
             </div>
@@ -150,13 +174,21 @@
                 <span class="text-[10px] uppercase font-bold text-[#5C6454] tracking-wider px-2">Pascabayar:</span>
 
                 @foreach($games->where('category.slug', 'tagihan-pascabayar') as $pb)
-                    @php $iconData = $getGameIcon($pb->slug); @endphp
+                    @php 
+                        $iconData = $getGameIcon($pb->slug); 
+                        $cnt = $unreviewedCountsByGame[$pb->id] ?? 0;
+                    @endphp
                     <a 
                         href="{{ route('admin.products', ['tab' => $pb->slug]) }}" 
                         class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all {{ $activeTab === $pb->slug ? 'bg-[#525A43] text-white shadow-xs' : 'bg-[#F6F0E8] text-[#1A2016] hover:bg-[#EAE1D4]' }}"
                     >
                         <span class="material-symbols-outlined text-sm {{ $activeTab === $pb->slug ? 'text-white' : $iconData['color'] }}">{{ $iconData['icon'] }}</span>
                         <span>{{ $pb->name }}</span>
+                        @if($cnt > 0)
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black {{ $activeTab === $pb->slug ? 'bg-amber-400 text-amber-950' : 'bg-rose-500 text-white' }} shadow-xs animate-pulse">
+                                {{ $cnt }}
+                            </span>
+                        @endif
                     </a>
                 @endforeach
 
@@ -167,6 +199,11 @@
                 >
                     <span class="material-symbols-outlined text-sm">apps</span>
                     <span>Semua Global</span>
+                    @if(($totalUnreviewedCount ?? 0) > 0)
+                        <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black {{ $activeTab === 'all' ? 'bg-amber-400 text-amber-950' : 'bg-rose-500 text-white' }} shadow-xs animate-pulse">
+                            {{ $totalUnreviewedCount }}
+                        </span>
+                    @endif
                 </a>
             </div>
 
@@ -184,11 +221,11 @@
                     <span class="text-xs font-bold uppercase tracking-wider text-[#5C6454]">Kategori Terpilih</span>
                     <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Digiflazz Real-Time Active
+                        Real-Time Gateway Active
                     </span>
                 </div>
                 <h2 class="text-lg font-extrabold text-[#1A2016]">
-                    {{ $activeGame->name ?? 'Semua Katalog Produk Digiflazz' }}
+                    {{ $activeGame->name ?? 'Semua Katalog Produk' }}
                 </h2>
                 @if($activeGame)
                     <span class="text-[11px] text-[#5C6454] font-medium">Provider: {{ $activeGame->publisher }} • Sub-kategori: <strong>{{ implode(', ', $presetSubCategories[$activeTab] ?? ['Top Up']) }}</strong></span>
@@ -214,6 +251,178 @@
         </div>
     </div>
 
+    <!-- Dedicated Sync Changes & Price Review Panel (Fitur Tempat Sendiri per Kategori) -->
+    @if(isset($unreviewedChanges) && $unreviewedChanges->count() > 0)
+        <div class="bg-gradient-to-br from-amber-50/90 via-[#FFFFFF] to-[#FDFBF7] border-2 border-amber-300/80 rounded-3xl p-5 lg:p-7 shadow-md relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-amber-200/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 mb-4 border-b border-amber-200/70">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                        <span class="material-symbols-outlined text-2xl">published_with_changes</span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-extrabold text-[#1A2016]">Pusat Perubahan Data &amp; Produk Baru</h3>
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500 text-white shadow-xs animate-pulse">
+                                {{ $unreviewedChanges->count() }} Perubahan Terdeteksi
+                            </span>
+                        </div>
+                        <p class="text-xs text-[#5C6454] mt-0.5">
+                            Data berikut baru ditarik dari provider untuk kategori <strong>{{ $activeGame->name ?? 'Layanan Aktif' }}</strong>. Anda dapat langsung meninjau produk baru, memeriksa kenaikan/penurunan harga modal, dan menyesuaikan harga jual serta margin laba di sini.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <form action="{{ route('admin.products.changes.mark-all-reviewed') }}" method="POST" onsubmit="return confirm('Tandai semua {{ $unreviewedChanges->count() }} perubahan di kategori ini sebagai selesai diperiksa?');">
+                        @csrf
+                        <input type="hidden" name="tab" value="{{ $activeTab }}">
+                        @if($activeGame)
+                            <input type="hidden" name="game_id" value="{{ $activeGame->id }}">
+                        @elseif($activeTab === 'ppob' && $ppobCategory)
+                            <input type="hidden" name="category_id" value="{{ $ppobCategory->id }}">
+                        @endif
+                        <button type="submit" class="h-9 px-3.5 bg-[#525A43] hover:bg-[#3B432D] text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer">
+                            <span class="material-symbols-outlined text-base">done_all</span>
+                            <span>Tandai Semua Selesai Diperiksa</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Table of Changes -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs text-left">
+                    <thead>
+                        <tr class="text-[10px] text-[#5C6454] uppercase font-extrabold border-b border-amber-200">
+                            <th class="pb-3 pr-2">Status Provider</th>
+                            <th class="pb-3 px-2">Produk &amp; SKU</th>
+                            <th class="pb-3 px-2">Harga Modal Provider</th>
+                            <th class="pb-3 px-2">Harga Jual Saat Ini</th>
+                            <th class="pb-3 px-2">Penyesuaian Harga Jual &amp; Laba</th>
+                            <th class="pb-3 pl-2 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-amber-200/60">
+                        @foreach($unreviewedChanges as $change)
+                            @php
+                                $p = $change->product;
+                                $costDiff = $change->old_cost_price ? ($change->new_cost_price - $change->old_cost_price) : 0;
+                            @endphp
+                            <tr class="hover:bg-amber-100/40 transition-colors">
+                                <!-- Type Badge -->
+                                <td class="py-3 pr-2 whitespace-nowrap">
+                                    @if($change->change_type === 'new_product')
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <span class="material-symbols-outlined text-xs">fiber_new</span>
+                                            PRODUK BARU
+                                        </span>
+                                    @elseif($change->change_type === 'price_changed')
+                                        @if($costDiff > 0)
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300">
+                                                <span class="material-symbols-outlined text-xs">trending_up</span>
+                                                MODAL NAIK
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-cyan-100 text-cyan-800 border border-cyan-300">
+                                                <span class="material-symbols-outlined text-xs">trending_down</span>
+                                                MODAL TURUN
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                                            <span class="material-symbols-outlined text-xs">sync_alt</span>
+                                            STATUS BERUBAH
+                                        </span>
+                                    @endif
+                                </td>
+
+                                <!-- Product Info -->
+                                <td class="py-3 px-2">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[#1A2016]">{{ $p?->name ?? 'Produk ID #'.$change->product_id }}</span>
+                                        <span class="text-[10px] font-mono text-[#878c7f]">SKU: {{ $p?->provider_sku ?? $p?->sku }}</span>
+                                    </div>
+                                </td>
+
+                                <!-- Cost Comparison -->
+                                <td class="py-3 px-2 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="font-extrabold text-[#1A2016]">Rp {{ number_format($change->new_cost_price, 0, ',', '.') }}</span>
+                                        @if($change->old_cost_price)
+                                            <div class="flex items-center gap-1 text-[10px]">
+                                                <span class="line-through text-[#878c7f]">Rp {{ number_format($change->old_cost_price, 0, ',', '.') }}</span>
+                                                <span class="font-bold {{ $costDiff > 0 ? 'text-rose-600' : 'text-emerald-600' }}">
+                                                    ({{ $costDiff > 0 ? '+' : '' }}Rp {{ number_format($costDiff, 0, ',', '.') }})
+                                                </span>
+                                            </div>
+                                        @else
+                                            <span class="text-[10px] text-emerald-700 font-bold">Produk Baru Ditambahkan</span>
+                                        @endif
+                                    </div>
+                                </td>
+
+                                <!-- Current Selling Price -->
+                                <td class="py-3 px-2 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[#1A2016]">Rp {{ number_format($p?->selling_price ?? $change->new_selling_price, 0, ',', '.') }}</span>
+                                        @php
+                                            $currProfit = ($p?->selling_price ?? $change->new_selling_price) - $change->new_cost_price;
+                                        @endphp
+                                        <span class="text-[10px] font-bold {{ $currProfit >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                            Laba: Rp {{ number_format($currProfit, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <!-- Quick Adjustment Form -->
+                                <td class="py-3 px-2">
+                                    <form action="{{ route('admin.products.changes.review', $change->id) }}" method="POST" class="flex items-center gap-2" id="form-change-{{ $change->id }}">
+                                        @csrf
+                                        <div class="relative w-32">
+                                            <span class="absolute left-2.5 top-2 text-[10px] font-bold text-[#878c7f]">Rp</span>
+                                            <input 
+                                                type="number" 
+                                                name="selling_price" 
+                                                value="{{ (int) ($p?->selling_price ?? $change->new_selling_price) }}" 
+                                                class="w-full h-8 pl-8 pr-2 bg-white border border-amber-300 rounded-lg text-xs font-bold text-[#1A2016] focus:outline-none focus:border-[#525A43]"
+                                                oninput="updateChangeProfit({{ $change->id }}, this.value, {{ $change->new_cost_price }})"
+                                            >
+                                        </div>
+                                        <div class="text-[10px] whitespace-nowrap">
+                                            <span class="text-[#5C6454]">Laba baru:</span>
+                                            <strong id="change-profit-{{ $change->id }}" class="text-emerald-700 font-extrabold">
+                                                Rp {{ number_format($currProfit, 0, ',', '.') }}
+                                            </strong>
+                                        </div>
+                                </td>
+
+                                <!-- Action Buttons -->
+                                <td class="py-3 pl-2 text-right whitespace-nowrap">
+                                        <button type="submit" class="h-8 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-extrabold inline-flex items-center gap-1 shadow-xs transition-colors cursor-pointer">
+                                            <span class="material-symbols-outlined text-sm">check</span>
+                                            <span>Simpan &amp; Selesai</span>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @elseif(isset($totalUnreviewedCount) && $totalUnreviewedCount > 0)
+        <!-- Notice if other categories have pending changes -->
+        <div class="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl flex items-center justify-between text-xs shadow-xs">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-600 text-lg">info</span>
+                <span>Semua produk di tab ini sudah diperiksa. Terdapat <strong>{{ $totalUnreviewedCount }} perubahan produk</strong> di kategori lain yang perlu Anda periksa.</span>
+            </div>
+            <span class="text-[10px] text-amber-700 font-bold uppercase tracking-wider">Periksa Tab Kategori Lainnya (Berbadge Angka)</span>
+        </div>
+    @endif
+
     <!-- Products Table Card -->
     <div class="bg-[#FFFFFF] border border-[#DCD1C2] rounded-3xl p-5 lg:p-7 shadow-sm">
         
@@ -229,13 +438,13 @@
             <table class="w-full text-xs text-left">
                 <thead>
                     <tr class="text-[10px] text-[#5C6454] uppercase font-extrabold border-b border-[#DCD1C2]">
-                        <th class="pb-3.5 pr-2">SKU Digiflazz</th>
+                        <th class="pb-3.5 pr-2">SKU Provider</th>
                         <th class="pb-3.5 px-2">Nama Menu / Produk</th>
                         <th class="pb-3.5 px-2">Sub-Kategori</th>
                         <th class="pb-3.5 px-2 bg-emerald-50/50 rounded-t-lg">
                             <div class="flex items-center gap-1 text-emerald-900">
                                 <span class="material-symbols-outlined text-xs">bolt</span>
-                                <span>Harga Modal Digiflazz (Rp)</span>
+                                <span>Harga Modal (Rp)</span>
                             </div>
                         </th>
                         <th class="pb-3.5 px-2">Harga Jual (Rp)</th>
@@ -295,7 +504,7 @@
                                 >
                             </td>
 
-                            <!-- Cost Price (Harga Modal Digiflazz - Realtime) -->
+                            <!-- Cost Price (Harga Modal Provider - Realtime) -->
                             <td class="py-3.5 px-2 whitespace-nowrap bg-emerald-50/40">
                                 <div class="relative flex items-center">
                                     <span class="absolute left-2.5 text-[10px] font-bold text-emerald-800">Rp</span>
@@ -406,7 +615,7 @@
                                     <form action="{{ route('admin.products.sync-digiflazz') }}" method="POST" class="mt-2">
                                         @csrf
                                         <button type="submit" class="px-4 py-2 bg-[#525A43] text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer">
-                                            Tarik Data Produk dari Digiflazz Sekarang
+                                            Tarik Data Produk dari Provider Sekarang
                                         </button>
                                     </form>
                                 </div>
@@ -418,7 +627,7 @@
         </div>
 
         <div class="pt-5 border-t border-[#DCD1C2]/60 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span class="text-xs text-[#5C6454]">Menampilkan total {{ $products->total() }} produk aktif Digiflazz</span>
+            <span class="text-xs text-[#5C6454]">Menampilkan total {{ $products->total() }} produk aktif</span>
             <div>
                 {{ $products->links() }}
             </div>
@@ -437,7 +646,7 @@
                 </div>
                 <div>
                     <h3 class="text-base font-extrabold text-[#1A2016]">Set Margin Laba Massal</h3>
-                    <p class="text-xs text-[#5C6454]">Atur margin otomatis dari harga modal Digiflazz</p>
+                    <p class="text-xs text-[#5C6454]">Atur margin otomatis dari harga modal provider</p>
                 </div>
             </div>
             <button type="button" onclick="closeBulkMarginModal()" class="w-8 h-8 rounded-full bg-[#F6F0E8] hover:bg-[#EAE1D4] text-[#1A2016] flex items-center justify-center cursor-pointer">
@@ -451,7 +660,7 @@
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-bold text-[#1A2016]">Target Kategori / Game:</label>
                 <select name="game_id" class="h-10 bg-[#F6F0E8] border border-[#DCD1C2] px-3 rounded-xl text-xs font-bold text-[#1A2016] focus:outline-none focus:border-[#525A43]">
-                    <option value="">Semua Game &amp; Layanan Digiflazz</option>
+                    <option value="">Semua Game &amp; Layanan Provider</option>
                     @foreach($games as $g)
                         <option value="{{ $g->id }}" {{ ($activeGame && $activeGame->id == $g->id) ? 'selected' : '' }}>
                             {{ $g->name }} ({{ $g->category?->name }})
@@ -485,7 +694,7 @@
             </div>
 
             <p class="text-[11px] text-[#5C6454] bg-[#F4EFE6] p-3 rounded-xl border border-[#DCD1C2]">
-                💡 Harga jual akan otomatis dihitung: <strong>Harga Modal Digiflazz + Margin</strong>, dan dibulatkan rapi ke kelipatan Rp 50.
+                💡 Harga jual akan otomatis dihitung: <strong>Harga Modal + Margin</strong>, dan dibulatkan rapi ke kelipatan Rp 50.
             </p>
 
             <div class="pt-3 border-t border-[#DCD1C2]/60 flex items-center justify-end gap-2.5">
@@ -725,6 +934,16 @@
 
         document.getElementById('profit-display-' + id).innerText = '+ Rp ' + Math.round(profit).toLocaleString('id-ID');
         document.getElementById('margin-display-' + id).innerText = (cost > 0 ? percent + '% margin' : 'Biaya Admin (Laba)');
+    }
+
+    function updateChangeProfit(changeId, sellPrice, costPrice) {
+        const sell = parseFloat(sellPrice) || 0;
+        const profit = sell - costPrice;
+        const el = document.getElementById('change-profit-' + changeId);
+        if (el) {
+            el.innerText = 'Rp ' + Math.round(profit).toLocaleString('id-ID');
+            el.className = profit >= 0 ? 'text-emerald-700 font-extrabold' : 'text-rose-700 font-extrabold';
+        }
     }
 
     function openBulkMarginModal() {

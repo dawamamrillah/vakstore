@@ -10,6 +10,7 @@ use App\Services\Provider\GameTopupService;
 use App\Services\Provider\PpobService;
 use App\Services\Voucher\VoucherService;
 use App\Services\Wallet\WalletService;
+use App\Support\ErrorSanitizer;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -221,9 +222,11 @@ class TransactionService
      */
     protected function handleFailedDelivery(Transaction $transaction, string $reason): void
     {
+        $cleanReason = ErrorSanitizer::sanitize($reason);
+
         $transaction->update([
             'transaction_status' => 'failed',
-            'failure_reason' => $reason,
+            'failure_reason' => $cleanReason,
         ]);
 
         // Auto refund if user paid via wallet
@@ -232,7 +235,7 @@ class TransactionService
                 $transaction->user,
                 (float) $transaction->total,
                 $transaction->invoice_number,
-                'Auto refund karena pengiriman gagal: '.$reason
+                'Auto refund karena pengiriman gagal: '.$cleanReason
             );
 
             $transaction->update([

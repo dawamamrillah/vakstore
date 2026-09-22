@@ -154,7 +154,7 @@ class DigiflazzProviderAdapter implements ProviderInterface
         return [
             'status' => 'unsupported',
             'provider_reference' => $providerRef,
-            'message' => 'Refund otomatis via API tidak didukung oleh provider gateway Digiflazz.',
+            'message' => 'Refund otomatis via API tidak didukung oleh provider gateway.',
         ];
     }
 }

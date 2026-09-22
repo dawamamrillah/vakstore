@@ -21,7 +21,7 @@ class NewGamesAndProductsSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        $provider = Provider::where('code', 'VAK_GATEWAY')->first() ?? Provider::first();
+        $provider = Provider::where('code', 'digiflazz')->first() ?? Provider::first();
 
         // 1. Valorant
         $valorant = Game::updateOrCreate([

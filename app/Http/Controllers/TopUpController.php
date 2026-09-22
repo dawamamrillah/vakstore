@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Services\Provider\GameTopupService;
 use App\Services\Transaction\TransactionService;
 use App\Services\Voucher\VoucherService;
+use App\Support\ErrorSanitizer;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -97,14 +98,16 @@ class TopUpController extends Controller
             return redirect()->route('invoice.show', $transaction->invoice_number)
                 ->with('success', 'Transaksi berhasil diproses!');
         } catch (Exception $e) {
+            $cleanError = ErrorSanitizer::sanitize($e->getMessage());
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => $e->getMessage(),
+                    'message' => $cleanError,
                 ], 422);
             }
 
-            return back()->withInput()->with('error', $e->getMessage());
+            return back()->withInput()->with('error', $cleanError);
         }
     }
 }

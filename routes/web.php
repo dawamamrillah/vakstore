@@ -95,6 +95,8 @@ Route::prefix('admin')->middleware(['admin'])->name('admin.')->group(function ()
     Route::post('/products/sync-digiflazz', [AdminProductController::class, 'syncDigiflazz'])->name('products.sync-digiflazz');
     Route::post('/products/bulk-margin', [AdminProductController::class, 'bulkMargin'])->name('products.bulk-margin');
     Route::post('/products/batch-update', [AdminProductController::class, 'batchUpdate'])->name('products.batch-update');
+    Route::post('/products/changes/{id}/review', [AdminProductController::class, 'reviewChange'])->name('products.changes.review');
+    Route::post('/products/changes/mark-all-reviewed', [AdminProductController::class, 'markAllReviewed'])->name('products.changes.mark-all-reviewed');
     Route::post('/products/{id}', [AdminProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{id}', [AdminProductController::class, 'destroy'])->name('products.destroy');
 

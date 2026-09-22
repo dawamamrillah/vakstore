@@ -4,16 +4,13 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Game;
-use App\Models\Payment;
 use App\Models\PpobServiceOption;
 use App\Models\Product;
 use App\Models\Provider;
 use App\Models\Setting;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -44,46 +41,6 @@ class DatabaseSeeder extends Seeder
         $adminWallet = Wallet::create([
             'user_id' => $admin->id,
             'balance' => 10000000,
-        ]);
-
-        $user = User::create([
-            'name' => 'Rian Pratama',
-            'email' => 'rian@vakstore.id',
-            'phone' => '081298765432',
-            'avatar' => 'https://lh3.googleusercontent.com/aida/AEtjO1Vz35s7cNNz41844hTRs2yYeWUsQADZmv1cBBT0xB8I9IHvSZy8Uxv9lc45vs94e3sw3tVzmEQ1LWYn7Waj8RUgPoaqAG6S7HCmYlF_PVh_Cia92wuV36EjDpKb7PrI2C1HjOP8fSt1BPfFg_lj-FAnIB-gxcZMCsXUdvZehyrHhhYfndSZ1w4mBzgJK8usJWzeHLuWzxbQb8pUGRgIF85A_mPLuqM870EVWONUFXfUTKImXJKcPcNDvIZJ',
-            'role' => 'user',
-            'status' => 'active',
-            'password' => Hash::make('password'),
-        ]);
-
-        $userWallet = Wallet::create([
-            'user_id' => $user->id,
-            'balance' => 450000,
-        ]);
-
-        // Seed initial wallet transactions for Rian Pratama
-        WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $userWallet->id,
-            'type' => 'deposit',
-            'amount' => 500000,
-            'balance_before' => 0,
-            'balance_after' => 500000,
-            'reference' => 'DEP-20260901-001',
-            'description' => 'Top Up Saldo via QRIS Instant Vault',
-            'created_at' => now()->subDays(5),
-        ]);
-
-        WalletTransaction::create([
-            'user_id' => $user->id,
-            'wallet_id' => $userWallet->id,
-            'type' => 'purchase',
-            'amount' => 50000,
-            'balance_before' => 500000,
-            'balance_after' => 450000,
-            'reference' => 'TRX-20260905-99281',
-            'description' => 'Pembelian MLBB 172 Diamond (12849102)',
-            'created_at' => now()->subDays(2),
         ]);
 
         // 3. Categories
@@ -120,14 +77,16 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 4. Provider
-        $provider = Provider::create([
-            'name' => 'VAK Fast Delivery Core',
-            'code' => 'VAK_GATEWAY',
-            'base_url' => 'https://api.vakstore.id/v1',
-            'api_key' => 'VAK_LIVE_SEC_8829102948172635489',
-            'api_secret' => 'SECRET_ENCRYPTED_KEY_2026',
-            'status' => 'active',
-        ]);
+        $provider = Provider::firstOrCreate(
+            ['code' => 'digiflazz'],
+            [
+                'name' => 'Provider Gateway (Utama)',
+                'base_url' => config('digiflazz.base_url', 'https://api.digiflazz.com/v1'),
+                'api_key' => config('digiflazz.development_key'),
+                'api_secret' => config('digiflazz.production_key'),
+                'status' => 'active',
+            ]
+        );
 
         // 5. Games & Services
         $mlbb = Game::create([
@@ -894,109 +853,5 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        // 8. Initial Historical Transactions (to populate telemetry graphs and user list)
-        $mlbbProduct = Product::where('sku', 'MLBB-172')->first();
-        $ffProduct = Product::where('sku', 'FF-355')->first();
-        $plnProduct = Product::where('sku', 'PLN-50K')->first();
-
-        $tx1 = Transaction::create([
-            'invoice_number' => 'TRX-20260906-891023',
-            'user_id' => $user->id,
-            'product_id' => $mlbbProduct->id,
-            'provider_id' => $provider->id,
-            'customer_name' => $user->name,
-            'customer_phone' => $user->phone,
-            'customer_email' => $user->email,
-            'target' => '12849102',
-            'target_secondary' => '2314',
-            'nickname' => 'RexRegum_Pro (Region: Indonesia)',
-            'cost_price' => $mlbbProduct->cost_price,
-            'selling_price' => $mlbbProduct->selling_price,
-            'discount' => 0,
-            'admin_fee' => 0,
-            'total' => $mlbbProduct->selling_price,
-            'profit' => $mlbbProduct->profit,
-            'payment_status' => 'paid',
-            'transaction_status' => 'success',
-            'provider_reference' => 'PRV-MLBB-99281726',
-            'serial_number' => 'SN-MLBB-99218274-1290',
-            'created_at' => now()->subDays(2),
-        ]);
-
-        Payment::create([
-            'transaction_id' => $tx1->id,
-            'payment_method' => 'wallet',
-            'payment_reference' => 'PAY-20260906-891023',
-            'amount' => $tx1->total,
-            'status' => 'paid',
-            'paid_at' => now()->subDays(2),
-        ]);
-
-        $tx2 = Transaction::create([
-            'invoice_number' => 'TRX-20260907-772810',
-            'user_id' => null,
-            'product_id' => $ffProduct->id,
-            'provider_id' => $provider->id,
-            'customer_name' => 'Agus Pratama',
-            'customer_phone' => '085712349988',
-            'customer_email' => 'agus@gmail.com',
-            'target' => '992810291',
-            'target_secondary' => null,
-            'nickname' => 'VAK_GhostHunter (ID Verified)',
-            'cost_price' => $ffProduct->cost_price,
-            'selling_price' => $ffProduct->selling_price,
-            'discount' => 5000,
-            'admin_fee' => 0,
-            'total' => $ffProduct->selling_price - 5000,
-            'profit' => ($ffProduct->selling_price - 5000) - $ffProduct->cost_price,
-            'voucher_code' => 'TOPUPHEMAT',
-            'payment_status' => 'paid',
-            'transaction_status' => 'success',
-            'provider_reference' => 'PRV-FF-88291029',
-            'serial_number' => 'SN-FF-88192019-9921',
-            'created_at' => now()->subDay(),
-        ]);
-
-        Payment::create([
-            'transaction_id' => $tx2->id,
-            'payment_method' => 'qris',
-            'payment_reference' => 'PAY-20260907-772810',
-            'amount' => $tx2->total,
-            'status' => 'paid',
-            'paid_at' => now()->subDay(),
-        ]);
-
-        $tx3 = Transaction::create([
-            'invoice_number' => 'TRX-20260908-100293',
-            'user_id' => $user->id,
-            'product_id' => $plnProduct->id,
-            'provider_id' => $provider->id,
-            'customer_name' => $user->name,
-            'customer_phone' => $user->phone,
-            'customer_email' => $user->email,
-            'target' => '14298102948',
-            'target_secondary' => null,
-            'nickname' => 'BUDI SANTOSO / R1M-900VA',
-            'cost_price' => $plnProduct->cost_price,
-            'selling_price' => $plnProduct->selling_price,
-            'discount' => 0,
-            'admin_fee' => 0,
-            'total' => $plnProduct->selling_price,
-            'profit' => $plnProduct->profit,
-            'payment_status' => 'paid',
-            'transaction_status' => 'success',
-            'provider_reference' => 'PRV-PLN-10029384',
-            'serial_number' => '4521-8891-2309-8812-3490',
-            'created_at' => now()->subHours(2),
-        ]);
-
-        Payment::create([
-            'transaction_id' => $tx3->id,
-            'payment_method' => 'wallet',
-            'payment_reference' => 'PAY-20260908-100293',
-            'amount' => $tx3->total,
-            'status' => 'paid',
-            'paid_at' => now()->subHours(2),
-        ]);
     }
 }

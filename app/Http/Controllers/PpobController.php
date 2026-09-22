@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\Provider\PpobService;
 use App\Services\Transaction\TransactionService;
 use App\Services\Voucher\VoucherService;
+use App\Support\ErrorSanitizer;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -162,13 +163,15 @@ class PpobController extends Controller
             if (empty($buyerSkuCode)) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Kode SKU Digiflazz tidak ditemukan untuk opsi yang dipilih.',
+                    'message' => 'Kode SKU provider tidak ditemukan untuk opsi yang dipilih.',
                 ], 422);
             }
 
             $res = $this->ppobService->inquiryDirect($buyerSkuCode, $customerNumber);
 
             if (($res['status'] ?? '') === 'error') {
+                $res['message'] = ErrorSanitizer::sanitize($res['message'] ?? 'Tagihan tidak ditemukan atau ID pelanggan tidak valid.');
+
                 return response()->json($res, 422);
             }
 
@@ -176,7 +179,7 @@ class PpobController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage(),
+                'message' => ErrorSanitizer::sanitize($e->getMessage()),
             ], 422);
         }
     }
@@ -244,14 +247,16 @@ class PpobController extends Controller
             return redirect()->route('invoice.show', $transaction->invoice_number)
                 ->with('success', 'Transaksi PPOB berhasil diproses!');
         } catch (Exception $e) {
+            $cleanError = ErrorSanitizer::sanitize($e->getMessage());
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => $e->getMessage(),
+                    'message' => $cleanError,
                 ], 422);
             }
 
-            return back()->withInput()->with('error', $e->getMessage());
+            return back()->withInput()->with('error', $cleanError);
         }
     }
 }

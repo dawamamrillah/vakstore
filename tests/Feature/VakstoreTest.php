@@ -22,6 +22,16 @@ class VakstoreTest extends TestCase
     {
         parent::setUp();
         $this->seed();
+
+        User::firstOrCreate([
+            'email' => 'rian@vakstore.id',
+        ], [
+            'name' => 'Rian Pratama',
+            'phone' => '081234567890',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+            'balance' => 250000,
+        ]);
     }
 
     public function test_home_page_renders_successfully(): void
