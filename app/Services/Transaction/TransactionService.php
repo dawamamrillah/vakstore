@@ -3,6 +3,7 @@
 namespace App\Services\Transaction;
 
 use App\Models\Product;
+use App\Models\PpobServiceOption;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Payment\PaymentGatewayService;
@@ -48,18 +49,50 @@ class TransactionService
             throw new Exception('Produk tidak ditemukan atau sedang tidak aktif.');
         }
 
+        // 2b. Validate PPOB service option against the selected product.
+        // Never allow an option belonging to another product to be stored.
+        $serviceOptionId = $data['ppob_service_option_id'] ?? ($data['service_option_id'] ?? null);
+
+        if ($serviceOptionId !== null && $serviceOptionId !== '') {
+            $serviceOption = PpobServiceOption::query()
+                ->whereKey((int) $serviceOptionId)
+                ->where('status', 'active')
+                ->first();
+
+            if (! $serviceOption) {
+                throw new Exception('Opsi layanan tidak ditemukan atau sedang tidak aktif.');
+            }
+
+            if ((int) $serviceOption->product_id !== (int) $product->id) {
+                throw new Exception('Opsi layanan tidak sesuai dengan produk yang dipilih.');
+            }
+
+            $serviceOptionId = $serviceOption->id;
+        } else {
+            $serviceOptionId = null;
+        }
+
         // 3. Price & Discount Calculation
         $billAmount = isset($data['bill_amount']) && is_numeric($data['bill_amount']) && $data['bill_amount'] > 0
             ? (float) $data['bill_amount']
             : 0.00;
 
-        if ($billAmount > 0) {
-            // For bill payments (PDAM, Telkom, PLN Pascabayar), selling_price represents the Admin Fee (laba)
+        $isBillProduct = in_array($product->game?->slug, [
+            'pdam-nusantara',
+            'telkom-indihome',
+            'pln-pascabayar',
+        ], true);
+
+        if ($isBillProduct && $billAmount > 0) {
+            // Pascabayar: bill_amount wajib berasal dari inquiry yang sudah diverifikasi oleh controller.
+            // Biaya provider dan margin admin tetap berasal dari database produk.
             $adminLaba = (float) $product->selling_price;
             $providerFee = (float) $product->cost_price;
             $costPrice = $billAmount + $providerFee;
             $sellingPrice = $billAmount + $adminLaba;
         } else {
+            // Prabayar/game/pulsa/token: selalu gunakan harga database.
+            // bill_amount dari request/frontend tidak boleh memengaruhi harga.
             $costPrice = (float) $product->cost_price;
             $sellingPrice = (float) $product->selling_price;
         }
@@ -109,7 +142,7 @@ class TransactionService
                 'invoice_number' => $invoiceNumber,
                 'user_id' => $user?->id,
                 'product_id' => $product->id,
-                'ppob_service_option_id' => $data['ppob_service_option_id'] ?? ($data['service_option_id'] ?? null),
+                'ppob_service_option_id' => $serviceOptionId,
                 'provider_id' => $product->provider_id,
                 'customer_name' => $data['customer_name'] ?? ($user?->name ?? 'Guest Customer'),
                 'customer_phone' => $data['customer_phone'] ?? ($user?->phone ?? null),
